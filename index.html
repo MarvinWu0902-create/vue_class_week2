@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>產品頁面</title>
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css">
+</head>
+
+<script type="module">
+    import { createApp } from 'https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.1/vue.esm-browser.min.js';
+    import axios from 'https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.5/esm/axios.js';
+
+
+
+    const apiPath = 'marvinapipath';
+
+    createApp({
+        data() {
+            return {
+                pageShow: false,
+                productData: [],
+                productTemp: {}
+            }
+        },
+        methods: {
+            getProduct(token) {
+                return axios.get(`https://ec-course-api.hexschool.io/v2/api/${apiPath}/admin/products`, {
+                    headers: {
+                        Authorization: token
+                    }
+                })
+                    .then((res) => {
+                        this.productData = res.data.products;
+                        this.pageShow = true;
+                    })
+                    .catch((err) => {
+                        console.log(err);
+                    });
+            },
+            checkHandler() {
+                const token = document.cookie.split("; ")
+                    .find((row) => row.startsWith("hexVueToken="))
+                    ?.split("=")[1];
+
+                return axios.post('https://ec-course-api.hexschool.io/v2/api/user/check', null, {
+                    headers: {
+                        Authorization: token
+                    }
+                })
+                    .then((res) => {
+                        if (!res.data.success) {
+
+                            window.location = 'login.html';
+
+                        } else {
+
+                            return this.getProduct(token)
+                        }
+                    })
+                    .catch((err) => {
+                        console.log(err);
+                        window.location = 'login.html';
+                    })
+            },
+            signoutHandler() {
+                document.cookie = "hexVueToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                this.checkHandler();
+            },
+            getProductTemp(product) {
+                this.productTemp = product;
+            }
+
+        },
+        mounted() {
+            this.checkHandler();
+        }
+    }).mount('#app');
+
+</script>
+
+<body>
+    <div id="app">
+        <div class="container" v-show="pageShow">
+            <div class="row py-3">
+                <div class="col-md-5">
+                    <h2>產品列表</h2>
+                    <table class="table table-hover mt-4 text-center">
+                        <thead>
+                            <tr>
+                                <th width="150">產品名稱</th>
+                                <th width="120">
+                                    原價
+                                </th>
+                                <th width="120">
+                                    售價
+                                </th>
+                                <th width="150">
+                                    是否啟用
+                                </th>
+                                <th width="120">
+                                    查看細節
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="product of productData" :key="product.title">
+                                <td width="150">{{product.title }}</td>
+                                <td width="120">
+                                    {{product.origin_price }}
+                                </td>
+                                <td width="120">
+                                    {{product.price }}
+                                </td>
+                                <td width="150">
+                                    <span class="text-success" v-show="product.is_enabled">啟用</span>
+                                    <span v-show="!product.is_enabled">未啟用</span>
+                                </td>
+                                <td width="120">
+                                    <button type="button" class="btn btn-primary"
+                                        @click="getProductTemp(product)">查看細節</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p>目前有 <span>{{ productData.length}}</span> 項產品</p>
+                </div>
+                <div class="col-md-5">
+                    <h2>單一產品細節</h2>
+                    <template v-if="productTemp.title">
+                        <div class="card mb-3">
+                            <img :src="productTemp.imageUrl" class="card-img-top primary-image" alt="主圖">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    {{ productTemp.title}}
+                                    <span class="badge bg-primary ms-2">{{ productTemp.category}}</span>
+                                </h5>
+                                <p class="card-text">商品描述：{{ productTemp.description}}</p>
+                                <p class="card-text">商品內容：{{ productTemp.content}}</p>
+                                <div class="d-flex">
+                                    <p class="card-text me-2">{{productTemp.origin_price }}</p>
+                                    <p class="card-text text-secondary"><del>{{productTemp.price }}</del></p>
+                                    元 / {{ productTemp.unit}}
+                                </div>
+                            </div>
+                        </div>
+
+                        <img v-for="image of productTemp.imagesUrl" :key="image" :src="image" alt="#"
+                            class="images m-2">
+
+                    </template v-else>
+                    <p v-show="!productTemp.title" class="text-secondary">請選擇一個商品查看</p>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-primary" type="button" @click="signoutHandler()">登出</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+
+
+</html>
