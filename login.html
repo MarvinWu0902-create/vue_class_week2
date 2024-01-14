@@ -20,14 +20,14 @@
                 email: '',
                 passWord: '',
                 isAllowLogin: false,
-                isLoading:false
+                isLoading: false
             }
         },
         methods: {
 
             loginHandler() {
 
-                this.isLoading=true;
+                this.isLoading = true;
 
                 axios.post('https://ec-course-api.hexschool.io/v2/admin/signin', {
                     username: this.email,
@@ -35,43 +35,14 @@
                 })
                     .then((res) => {
                         const { token, expired } = res.data;
-                        document.cookie = `hexVueToken=${token};expires=${new Date(expired)}`;
-                        return this.checkHandler()
+                        document.cookie = `hexVueToken=${token};expires=${new Date(expired)};path=/;`;
+                        return window.location = 'index.html';
                     })
                     .catch((err) => {
-                        this.isLoading=false;
+                        this.isLoading = false;
                         alert('帳號密碼錯誤!');
-                        console.log(err);
-                    })
-            },
-            checkHandler() {
-                const token = document.cookie.split("; ")
-                    .find((row) => row.startsWith("hexVueToken="))
-                    ?.split("=")[1];
-
-                return axios.post('https://ec-course-api.hexschool.io/v2/api/user/check',null,{
-                    headers:{
-                        Authorization:token
-                    }
-                })
-                    .then((res) => {
-                        this.isAllowLogin = res.data.success;
-                        this.isLoading=false;
-                        if(this.isAllowLogin){
-                            window.location='index.html';
-                        }else{
-                            alert('登入失敗!');
-                        }
-                    })
-                    .catch((err) => {
-                        this.isLoading=false;
-                        alert('驗證錯誤!');
-                        console.log(err);
                     })
             }
-        },
-        mounted() {
-
         }
     }).mount('#app');
 
@@ -95,13 +66,12 @@
                             <label for="username">Email address</label>
                         </div>
                         <div class="form-floating">
-                            <input type="password" class="form-control" id="password" placeholder="Password" required @keyup.enter="loginHandler()"
-                                v-model="passWord">
+                            <input type="password" class="form-control" id="password" placeholder="Password" required
+                                @keyup.enter="loginHandler()" v-model="passWord">
                             <label for="password">Password</label>
                         </div>
-                        <button :class="{ 'cursor-wait': isLoading,'cursor-default':!isLoading }" class="btn btn-lg btn-primary w-100 mt-3" type="button" 
-                             
-                            @click="loginHandler()">
+                        <button :class="{ 'cursor-wait': isLoading,'cursor-default':!isLoading }"
+                            class="btn btn-lg btn-primary w-100 mt-3" type="button" @click="loginHandler()">
                             登入
                         </button>
                     </form>
